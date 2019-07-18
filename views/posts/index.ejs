@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <% include ../partials/head %>
+</head>
+<body>
+  <header>
+    <% include ../partials/header %>
+  </header>
+  <div class="posts">
+      <% include partials/top %>
+
+      <!-- main start -->
+      
+      <!-- views/posts/index.ejs -->
+      <div class="index">
+        <a href="/posts/new"><button>New</button></a>
+        <ul>
+          <% kiki.forEach(function(ki){ %>
+            <li>
+              <a href="/posts/<%= ki._id %>"><%= ki.title %></a>
+              <span><%= ki.createdAt.toLocaleDateString() %></span>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+      <!-- main end -->
+  </div>
+
+  <!-- footer -->
+  <% include ../partials/footer %>
+</body>
+</html>

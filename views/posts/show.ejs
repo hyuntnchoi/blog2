@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <% include ../partials/head %>
+</head>
+<body>
+  <header>
+    <% include ../partials/header %>
+  </header>
+  <div class="posts">
+      <% include partials/top %>
+
+      <!-- main start -->
+      
+      <!-- views/posts/show.ejs -->
+      <div class="show">
+        <h3><%= kiki.title %></h3>
+        <div class="time">Created at <br>
+          <%= kiki.createdAt.toLocaleDateString() %> <br>
+          <%= kiki.createdAt.toLocaleTimeString() %>
+        </div>
+        <% if(kiki.updatedAt) { %>
+          <div class="time">Updated at <br>
+            <%= kiki.updatedAt.toLocaleDateString() %> <br>
+            <%= kiki.updatedAt.toLocaleTimeString() %>
+          </div>
+        <% } %>
+        <p class="body"><%= kiki.body %></p>
+        <div class="tools">
+          <a href="/posts/<%=kiki._id%>/edit"><button>수정</button></a>
+          <!-- Delete button here -->
+          <form class="btn_delete" action="/posts/<%=kiki._id%>?_method=delete" method="post">
+          <button type="submit">삭제</button>
+          </form>
+        </div>
+        <a href="/posts"><button>뒤로</button></a>
+      </div>
+      <!-- main end -->
+  </div>
+
+  <!-- footer -->
+  <% include ../partials/footer %>
+</body>
+</html>
