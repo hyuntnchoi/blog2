@@ -16,6 +16,7 @@
       <div class="index">
         <a href="/posts/new"><button>New</button></a>
         <ul>
+            <li class="header">Title <span>Date</span></li>
           <% kiki.forEach(function(ki){ %>
             <li>
               <a href="/posts/<%= ki._id %>"><%= ki.title %></a>
