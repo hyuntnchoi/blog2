@@ -31,7 +31,7 @@ var postSchema = mongoose.Schema({
 });
 var Aaa = mongoose.model('bbb', postSchema);
 
-var userSchehma = mongoose.Schema({
+var userSchema = mongoose.Schema({
     email: {type:String, required:true, unique:true},
     nickname: {type:String, required:true, unique:true},
     password: {type:String, required:true},
@@ -91,22 +91,23 @@ passport.use('local-login',
 app.get('/', function(req,res){
     res.redirect('/posts');
 });
-app.get('/login', function(req, res){
-    res.render('login/login', {email:req.flash("email")[0], loginError:req.flash('loginError')});
+app.get('/login11', function(req, res){
+    res.render('login/login11', {email:req.flash("email")[0], loginError:req.flash('loginError')});
 });
-app.post('/login',
+app.post('/login1',
     function(req, res, next){
         req.flash("email"); // flush email data
+        console.log(req.body.email); //테스팅, 나중에 지우기
         if(req.body.email.length === 0 || req.body.password.length === 0){
             req.flash("email", req.body.email);
-            req.flash("loginError", "Please enter both email and password");
-            res.redirect('/login');
+            req.flash("loginError", "Please enter both email and password.");
+            res.redirect('/login11');
         } else {
             next();
         }
     }, passport.authenticate('local-login', {
         successRedirect : '/posts',
-        failureRedirect : '/login',
+        failureRedirect : '/login11',
         failureFlash : true
     })
 );
@@ -115,10 +116,64 @@ app.get('/logout', function(req, res){
     res.redirect('/');
 });
 
+// set user routes
+app.get('/users/new', function(req, res){
+    res.render('users/new', {
+                             formData: req.flash('formData')[0],
+                             emailError: req.flash('emailError')[0],
+                             nicknameError: req.flash('nicknameError')[0],
+                             passwordError: req.flash('passwordError')[0]
+                            }
+    );
+}); // new
+app.post('/users', checkUserRegValidation, function(req, res, next){
+    Ccc.create(req.body.user, function(err, ddd){
+        if(err) return res.json({success:false, message:err});
+        res.redirect('/login');
+    });
+}); // create
+app.get('/users/:id', function(req, res){
+    Ccc.findById(req.params.id, function(err, ddd){
+        if(err) return res.json({success:false, message:err});
+        res.render("users/show", {ddd: ddd});
+    });
+}); // show
+app.get('/users/:id/edit', function(req, res){
+    Ccc.findById(req.params.id, function(err, ddd){
+        if(err) return res.json({success:false, message:err});
+        res.render("users/edit", {
+                                  ddd: ddd,
+                                  formData: req.flash('formData')[0],
+                                  nicknameError: req.flash('nicknameError')[0],
+                                  passwordError: req.flash('passwordError')[0]
+                                 }
+        );
+    });
+}); // edit
+app.put('/users/:id', checkUserRegValidation, function(req, res){
+    Ccc.findById(req.params.id, req.body.user, function(err, user){
+        if(err) return res.json({success:"false", message:err});
+        if(req.body.user.password == user.password){
+            if(req.body.user.newPassword){
+                req.body.user.password=req.body.user.newPassword;
+            } else {
+                delete req.body.user.password;
+            }
+            Ccc.findByIdAndUpdate(req.params.id, req.body.user, function(err, ddd){
+                if(err) return res.json({success:"false", message:err});
+                res.redirect('/users/'+req.params.id);
+            });
+        } else {
+            req.flash("formData", req.body.user);
+            req.flash("passwordError", "- Invalid password");
+            res.redirect('/users/'+req.params.id+"/edit");
+        }
+    });
+}); // update
 app.get('/posts', function(req, res){
     Aaa.find({}).sort('-createdAt').exec(function(err, posts){
         if(err) return res.json({success:false, message:err});
-        res.render("posts/index", {kiki:posts});
+        res.render("posts/index", {kiki:posts, ddd:req.ddd});
     });
 }); // index
 
@@ -158,6 +213,43 @@ app.put('/posts/:id', function(req, res){
     });
 }); // update
 // :id -> /posts/1234로 주소가 입력되면 :id 부분 즉 1234가 req.params.id에 저장됨
+
+//functions
+function checkUserRegValidation(req, res, next){
+    var isValid = true;
+
+    async.waterfall(
+        [function(callback){
+            User.findOne({email: req.body.user.email, _id: {$ne: mongoose.Types.ObjectId(req.params.id)}},
+              function(err, ddd){
+                  if(ddd){
+                      isValid = false;
+                      req.flash("emailError","- This email is already resistered.");
+                  }
+                  callback(null, isValid);
+              }
+            );
+        }, function(isValid, callback){
+            Ccc.findOne({nickname: req.body.user.nickname, _id: {$ne: mongoose.Types.ObjectId(req.params.id)}},
+              function(err, ddd){
+                  if(ddd){
+                      isValid = false;
+                      req.flash("nicknameError","- This nickname is already resistered.");
+                  }
+                  callback(null, isValid);
+              }
+            );
+        }], function(err, isValid){
+            if(err) return res.json({success:"false", message:err});
+            if(isValid){
+                return next();
+            } else {
+                req.flash("formData", req.body.user);
+                res.redirect("back");
+            }
+        }
+    );
+}
 
 app.delete('/posts/:id', function(req, res){
     Aaa.findByIdAndRemove(req.params.id, function(err, post){

@@ -14,9 +14,16 @@
       
       <!-- views/posts/index.ejs -->
       <div class="index">
-        <a href="/posts/new"><button>New</button></a>
+        <a href="/posts/new"><button>글 작성</button></a>
+        <% if(ddd) {%>
+          <a href="/logout" class="float_right"><button>로그아웃</button></a>
+          <a href="/users/<%= user._id %>" class="float_right"><button>프로필 (<%= user.nickname %>)</button></a>
+        <% } else { %>
+          <a href="/login11" class="float_right"><button>로그인</button></a>
+          <a href="/users/new" class="float_right"><button>회원가입</button></a>
+        <% } %>
         <ul>
-            <li class="header">Title <span>Date</span></li>
+            <li class="header">글 제목 <span>작성일</span></li>
           <% kiki.forEach(function(ki){ %>
             <li>
               <a href="/posts/<%= ki._id %>"><%= ki.title %></a>
