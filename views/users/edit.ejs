@@ -13,23 +13,24 @@
       
       <!-- views/posts/index.ejs -->
       <div class="edit">
-          <h3>Update User Information</h3>
-          <form id="update_user" class="users_form" action="/users/<%= user._id %>_method=put" method="post">
-            <label>Current Password* <span id="password_error" class="error_message"><%= passwordError?passwordError:"" %></span></label>
+          <h3>사용자 정보 변경</h3>
+          <!-- <form id="update_user" class="users_form" action="/users/<%= ddd._id %>_method=put" method="post"> -->
+          <form id="update_user" class="users_form" action="/users/<%= ddd._id %>?_method=put" method="post">
+            <label>현재 비밀번호* <span id="password_error" class="error_message"><%= passwordError?passwordError:"" %></span></label>
             <input type="text" id="password" name="user[password]" value="">
             <br><br>
-            <label>Email* <span id="email_error" class="error_message"><%= emailError?emailError:"" %></span></label>
-            <input type="text" id="email" name="user[email]" value="<%= formData?formData.email:(user?user.email:"") %>">
-            <label>Nickname* <span id="nickname_error" class="error_message"><%= nicknameError?nicknameError:"" %></span></label>
-            <input type="text" id="nickname" name="user[nickname]" value="<%= formData?formData.nickname:(user?user.nickname:"") %>">
-            <label>New Password</label>
+            <label>이메일* <span id="email_error" class="error_message"><%= emailError?emailError:"" %></span></label>
+            <input type="text" id="email" name="user[email]" value="<%= formData?formData.email:(ddd?ddd.email:"") %>">
+            <label>별명* <span id="nickname_error" class="error_message"><%= nicknameError?nicknameError:"" %></span></label>
+            <input type="text" id="nickname" name="user[nickname]" value="<%= formData?formData.nickname:(ddd?ddd.nickname:"") %>">
+            <label>새 비밀번호</label>
             <input type="text" id="new_password" name="user[newPassword]" value="">
-            <label>Password Confirmation <span id="password_confirmation_error" class="error_message"></span></label>
+            <label>새 비밀번호 확인 <span id="password_confirmation_error" class="error_message"></span></label>
             <input type="text" id="password_confirmation" name="user[passwordConfirmation]" value="">
-            <p><small>*Required</small></p>
-            <input type="button" class="submit_btn" value="submit">
+            <p><small>*필수 입력 사항</small></p>
+            <input type="button" class="submit_btn" value="변경">
           </form>
-          <a href="javascript.history.back()"><button>Back</button>
+          <a href="javascript:history.back()"><button>뒤로</button>
       </div>
       <!-- javascript -->
       <script type="text/javascript" src="/js/userform.js"></script>

@@ -8,6 +8,7 @@ var passport = require('passport');
 var session = require('express-session');
 var flash = require('connect-flash');
 var async = require('async');
+mongoose.set('useCreateIndex', true) // to fix "colleection.ensureIndex is deprecated", 버전업되면 없어도 될 듯?
 
 
 // connect database
@@ -49,16 +50,22 @@ app.use(bodyParser.urlencoded({extended:true})); // 위는 다른 프로그램�
 app.use(methodOverride("_method"));
 app.use(flash());
 
-app.use(session({secret:'MySecret'}));
+app.use(session({secret:'MySecret',
+                 resave: true,
+                 saveUninitialized: true
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
 passport.serializeUser(function(ddd, done){
+    console.log('serialize');
     done(null, ddd.id);
 });
 passport.deserializeUser(function(id, done){
-    Ccc.findById(id, function(err, user){
-        done(err, user);
+    console.log('deserialize');
+    Ccc.findById(id, function(err, ddd){
+        done(err, ddd);
+    console.log(ddd);
     });
 });
 
@@ -81,7 +88,7 @@ passport.use('local-login',
                 req.flash("email", req.body.email);
                 return done(null, false, req.flash('loginError', 'Password does not Match'));
             }
-            return done(null, user);
+            return done(null, ddd);
         });
     }
   )
@@ -97,7 +104,6 @@ app.get('/login11', function(req, res){
 app.post('/login1',
     function(req, res, next){
         req.flash("email"); // flush email data
-        console.log(req.body.email); //테스팅, 나중에 지우기
         if(req.body.email.length === 0 || req.body.password.length === 0){
             req.flash("email", req.body.email);
             req.flash("loginError", "Please enter both email and password.");
@@ -129,7 +135,7 @@ app.get('/users/new', function(req, res){
 app.post('/users', checkUserRegValidation, function(req, res, next){
     Ccc.create(req.body.user, function(err, ddd){
         if(err) return res.json({success:false, message:err});
-        res.redirect('/login');
+        res.redirect('/login11');
     });
 }); // create
 app.get('/users/:id', function(req, res){
@@ -144,6 +150,7 @@ app.get('/users/:id/edit', function(req, res){
         res.render("users/edit", {
                                   ddd: ddd,
                                   formData: req.flash('formData')[0],
+                                  emailError: req.flash('emailError')[0],
                                   nicknameError: req.flash('nicknameError')[0],
                                   passwordError: req.flash('passwordError')[0]
                                  }
@@ -152,6 +159,8 @@ app.get('/users/:id/edit', function(req, res){
 }); // edit
 app.put('/users/:id', checkUserRegValidation, function(req, res){
     Ccc.findById(req.params.id, req.body.user, function(err, user){
+        console.log(req.params.id);
+        console.log(req.body);
         if(err) return res.json({success:"false", message:err});
         if(req.body.user.password == user.password){
             if(req.body.user.newPassword){
@@ -173,7 +182,8 @@ app.put('/users/:id', checkUserRegValidation, function(req, res){
 app.get('/posts', function(req, res){
     Aaa.find({}).sort('-createdAt').exec(function(err, posts){
         if(err) return res.json({success:false, message:err});
-        res.render("posts/index", {kiki:posts, ddd:req.ddd});
+        res.render("posts/index", {kiki:posts, ddd:req.user});
+// req.user는 LocalStrategy나 serialize/deserialize에서 ddd로 적어도 req.user라는 걸로 접근하네..
     });
 }); // index
 
@@ -204,8 +214,6 @@ app.get('/posts/:id/edit', function(req, res){
 }); // edit
 
 app.put('/posts/:id', function(req, res){
-    console.log(req.params.id);
-    console.log(req.body.post);
     req.body.post.updatedAt=Date.now();
     Aaa.findByIdAndUpdate(req.params.id, req.body.post, function(err, post){
         if(err) return req.json({success:false, message:err});
@@ -220,7 +228,7 @@ function checkUserRegValidation(req, res, next){
 
     async.waterfall(
         [function(callback){
-            User.findOne({email: req.body.user.email, _id: {$ne: mongoose.Types.ObjectId(req.params.id)}},
+            Ccc.findOne({email: req.body.user.email, _id: {$ne: mongoose.Types.ObjectId(req.params.id)}},
               function(err, ddd){
                   if(ddd){
                       isValid = false;

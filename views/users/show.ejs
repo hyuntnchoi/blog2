@@ -13,14 +13,13 @@
       
       <!-- views/users/show.ejs -->
       <div class="show">
-        <h3>User Info</h3>
+        <h3>사용자 정보</h3>
         <div class="content">
-          <p class="user_info">Email<small> : <%= user.email %></small></p>
-          <p class="user_info">Nickname<small> : <%= user.nickname %></small></p>
-          <p class="user_info">Password<small> : <%= user.password %></small></p>
-          <a href="/users/<%=user._id%>/edit"><button>Edit</button></a>
+          <p class="user_info">이메일<small> : <%= ddd.email %></small></p>
+          <p class="user_info">별명<small> : <%= ddd.nickname %></small></p>
+          <a href="/users/<%=ddd._id%>/edit"><button>수정</button></a>
         </div>
-        <a href="/"><button>Back</button>
+        <a href="/"><button>뒤로</button>
       </div>
       
       <!-- main end -->

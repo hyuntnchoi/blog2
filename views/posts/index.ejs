@@ -17,7 +17,8 @@
         <a href="/posts/new"><button>글 작성</button></a>
         <% if(ddd) {%>
           <a href="/logout" class="float_right"><button>로그아웃</button></a>
-          <a href="/users/<%= user._id %>" class="float_right"><button>프로필 (<%= user.nickname %>)</button></a>
+          <a href="/users/<%= ddd._id %>" class="float_right"><button>프로필 (<%= ddd.nickname %>)</button></a>
+          <%= console.log(ddd._id) %>
         <% } else { %>
           <a href="/login11" class="float_right"><button>로그인</button></a>
           <a href="/users/new" class="float_right"><button>회원가입</button></a>
@@ -34,7 +35,6 @@
       </div>
       <!-- main end -->
   </div>
-
   <!-- footer -->
   <% include ../partials/footer %>
 </body>
