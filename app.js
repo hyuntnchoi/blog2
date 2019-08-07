@@ -32,12 +32,29 @@ var postSchema = mongoose.Schema({
 });
 var Aaa = mongoose.model('bbb', postSchema);
 
+var bcrypt = require('bcrypt-nodejs');
 var userSchema = mongoose.Schema({
     email: {type:String, required:true, unique:true},
     nickname: {type:String, required:true, unique:true},
     password: {type:String, required:true},
     createdAt: {type:Date, default:Date.now}
 });
+userSchema.pre("save", function(next){
+    var user = this;
+    if(!user.isModified("password")){
+        return next();
+    } else {
+        user.password = bcrypt.hashSync(user.password);
+        return next();
+    }
+}); // ddd 모델이 "save"되기 전(pre)에 모델에 대해서 할 일을 schema에 저장하는 단계
+userSchema.methods.authenticate = function(password){
+    var user = this;
+    return bcrypt.compareSync(password, user.password);
+};
+userSchema.methods.hash = function(password){
+    return bcrypt.hashSync(password);
+};
 var Ccc = mongoose.model('ddd', userSchema);
 
 // view setting
@@ -84,7 +101,7 @@ passport.use('local-login',
                 req.flash("email", req.body.email);
                 return done(null, false, req.flash('loginError', 'No user found.'));
             }
-            if(ddd.password != password){
+            if(!ddd.authenticate(password)){
                 req.flash("email", req.body.email);
                 return done(null, false, req.flash('loginError', 'Password does not Match'));
             }
@@ -138,13 +155,14 @@ app.post('/users', checkUserRegValidation, function(req, res, next){
         res.redirect('/login11');
     });
 }); // create
-app.get('/users/:id', function(req, res){
+app.get('/users/:id', isLoggedIn, function(req, res){
     Ccc.findById(req.params.id, function(err, ddd){
         if(err) return res.json({success:false, message:err});
         res.render("users/show", {ddd: ddd});
     });
 }); // show
-app.get('/users/:id/edit', function(req, res){
+app.get('/users/:id/edit', isLoggedIn, function(req, res){
+    if(req.user._id != req.params.id) return res.json({success:false, message:"허가받지 않은 시도"})
     Ccc.findById(req.params.id, function(err, ddd){
         if(err) return res.json({success:false, message:err});
         res.render("users/edit", {
@@ -157,14 +175,14 @@ app.get('/users/:id/edit', function(req, res){
         );
     });
 }); // edit
-app.put('/users/:id', checkUserRegValidation, function(req, res){
+app.put('/users/:id', isLoggedIn, checkUserRegValidation, function(req, res){
+    console.log(req.user._id);
+    if(req.user._id != req.params.id) return Response.json({success:false, message:"허가받지 않은 시도"})
     Ccc.findById(req.params.id, req.body.user, function(err, user){
-        console.log(req.params.id);
-        console.log(req.body);
         if(err) return res.json({success:"false", message:err});
-        if(req.body.user.password == user.password){
+        if(user.authenticate(req.body.user.password)){
             if(req.body.user.newPassword){
-                req.body.user.password=req.body.user.newPassword;
+                req.body.user.password = user.hash(req.body.user.newPassword);
             } else {
                 delete req.body.user.password;
             }
@@ -223,6 +241,13 @@ app.put('/posts/:id', function(req, res){
 // :id -> /posts/1234로 주소가 입력되면 :id 부분 즉 1234가 req.params.id에 저장됨
 
 //functions
+function isLoggedIn(req, res, next){
+    if(req.isAuthenticated()){
+        return next();
+    }
+    res.redirect('/');
+}
+
 function checkUserRegValidation(req, res, next){
     var isValid = true;
 
