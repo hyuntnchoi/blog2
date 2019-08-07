@@ -18,17 +18,21 @@
         <% if(ddd) {%>
           <a href="/logout" class="float_right"><button>로그아웃</button></a>
           <a href="/users/<%= ddd._id %>" class="float_right"><button>프로필 (<%= ddd.nickname %>)</button></a>
-          <%= console.log(ddd._id) %>
         <% } else { %>
           <a href="/login11" class="float_right"><button>로그인</button></a>
           <a href="/users/new" class="float_right"><button>회원가입</button></a>
         <% } %>
         <ul>
-            <li class="header">글 제목 <span>작성일</span></li>
+            <li class="header">글 제목 
+              <span class="float_right">작성일</span>
+              <span class="float_right">작성자</span>
+            </li>
           <% kiki.forEach(function(ki){ %>
             <li>
               <a href="/posts/<%= ki._id %>"><%= ki.title %></a>
-              <span><%= ki.createdAt.toLocaleDateString() %></span>
+              <span class="float_right"><%= ki.createdAt.toLocaleDateString() %></span>
+              <span class="float_right"><%= ki.author.nickname %></span>
+              <%= console.log(ki.author.email) %>
             </li>
           <% }) %>
         </ul>

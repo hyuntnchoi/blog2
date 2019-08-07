@@ -26,6 +26,7 @@ db.on("error", function(err){
 var postSchema = mongoose.Schema({
     title: {type:String, required:true}, 
     body: {type:String, required:true},
+    author: {type:mongoose.Schema.Types.ObjectId, ref:'ddd', required:true},
     createdAt: {type:Date, default:Date.now},
     updatedAt: Date
     //required:true의 뜻은 데이터 생성, 변경 시 반드시 값을 넣어야 한다는 뜻
@@ -82,7 +83,6 @@ passport.deserializeUser(function(id, done){
     console.log('deserialize');
     Ccc.findById(id, function(err, ddd){
         done(err, ddd);
-    console.log(ddd);
     });
 });
 
@@ -176,7 +176,6 @@ app.get('/users/:id/edit', isLoggedIn, function(req, res){
     });
 }); // edit
 app.put('/users/:id', isLoggedIn, checkUserRegValidation, function(req, res){
-    console.log(req.user._id);
     if(req.user._id != req.params.id) return Response.json({success:false, message:"허가받지 않은 시도"})
     Ccc.findById(req.params.id, req.body.user, function(err, user){
         if(err) return res.json({success:"false", message:err});
@@ -198,18 +197,19 @@ app.put('/users/:id', isLoggedIn, checkUserRegValidation, function(req, res){
     });
 }); // update
 app.get('/posts', function(req, res){
-    Aaa.find({}).sort('-createdAt').exec(function(err, posts){
+    Aaa.find({}).populate("author").sort('-createdAt').exec(function(err, posts){
         if(err) return res.json({success:false, message:err});
         res.render("posts/index", {kiki:posts, ddd:req.user});
 // req.user는 LocalStrategy나 serialize/deserialize에서 ddd로 적어도 req.user라는 걸로 접근하네..
     });
 }); // index
 
-app.get('/posts/new', function(req, res){
-    res.render("posts/new");
+app.get('/posts/new', isLoggedIn, function(req, res){
+    res.render("posts/new", {ddd:req.user});
 }); // new
 
-app.post('/posts', function(req, res){
+app.post('/posts', isLoggedIn, function(req, res){
+    req.body.post.author=req.user._id;
     Aaa.create(req.body.post, function(err, post){
         if(err) return res.json({success:false, message:err});
         res.redirect('/posts');
@@ -218,27 +218,46 @@ app.post('/posts', function(req, res){
 // create
 
 app.get('/posts/:id', function(req, res){
-    Aaa.findById(req.params.id, function(err, post){
+    Aaa.findById(req.params.id).populate("author").exec(function(err, post){
         if(err) return res.json({success:false, message:err});
-        res.render("posts/show", {kiki:post});
+        res.render("posts/show", {kiki:post, ddd:req.user});
     });
 }); // show
 
-app.get('/posts/:id/edit', function(req, res){
+app.get('/posts/:id/edit', isLoggedIn, function(req, res){
     Aaa.findById(req.params.id, function(err, post){
         if(err) return res.json({success:false, message:err});
-        res.render("posts/edit", {kiki:post});
+        if(!req.user._id.equals(post.author)) return res.json({success:false, message:"허가받지 않은 시도"});
+        res.render("posts/edit", {kiki:post, ddd:req.user});
+        console.log("req.params.id:" + req.params.id);
+        console.log("req.user._id :" + req.user._id);
+        console.log("post.author  :" + post.author);
     });
 }); // edit
 
-app.put('/posts/:id', function(req, res){
+app.put('/posts/:id', isLoggedIn, function(req, res){
     req.body.post.updatedAt=Date.now();
-    Aaa.findByIdAndUpdate(req.params.id, req.body.post, function(err, post){
-        if(err) return req.json({success:false, message:err});
-        res.redirect('/posts/'+req.params.id);
+    Aaa.findById(req.params.id, function(err, post){
+        if(err) return res.json({success:false, message:err});
+        if(!req.user._id.equals(user.author)) return res.json({success:false, message:"허가받지 않은 시도"});
+        Aaa.findByIdAndUpdate(req.params.id, req.body.post, function(err, post){
+            if(err) return res.json({success:false, message:err});
+            res.redirect('/posts/'+req.params.id);
+        });
     });
 }); // update
 // :id -> /posts/1234로 주소가 입력되면 :id 부분 즉 1234가 req.params.id에 저장됨
+
+app.delete('/posts/:id', isLoggedIn, function(req, res){
+    Aaa.findById(req.params.id, function(err, post){
+        if(err) return res.json({success:false, message:err});
+        if(!req.user._id.equals(user.author)) return res.json({success:false, message:"허가받지 않은 시도"});
+        Aaa.findByIdAndRemove(req.params.id, function(err, post){
+            if(err) return res.json({success:false, message:err});
+            res.redirect('/posts/');
+        });
+    });
+}); // destroy
 
 //functions
 function isLoggedIn(req, res, next){
@@ -283,13 +302,6 @@ function checkUserRegValidation(req, res, next){
         }
     );
 }
-
-app.delete('/posts/:id', function(req, res){
-    Aaa.findByIdAndRemove(req.params.id, function(err, post){
-        if(err) return req.json({success:false, message:err});
-        res.redirect('/posts');
-    });
-}); // destroy
 
 // start server
 app.listen(3000, function(){

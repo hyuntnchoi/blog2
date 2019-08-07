@@ -26,6 +26,8 @@
           </div>
         <% } %>
         <p class="body"><%= kiki.body %></p>
+        <div class="float_right">작성자: <%= kiki.author.nickname %></div>
+        <% if(ddd && ddd.equals(kiki.author._id)) { %>
         <div class="tools">
           <a href="/posts/<%=kiki._id%>/edit"><button>수정</button></a>
           <!-- Delete button here -->
@@ -33,6 +35,7 @@
           <button type="submit">삭제</button>
           </form>
         </div>
+        <% } %>
         <a href="javascript:history.back();"><button>뒤로</button></a>
       </div>
       <!-- main end -->

@@ -20,6 +20,7 @@
           <input type="text" name="post[title]" value="<%=kiki.title%>"> <br><br>
           <label>내용</label>
           <textarea name="post[body]"><%=kiki.body%></textarea> <br><br>
+          <div class="float_right">작성자: <%= ddd.nickname %></div>
           <button type="submit">수정</button>
         </form>
         <a href="javascript:history.back();"><button>뒤로</button></a>
